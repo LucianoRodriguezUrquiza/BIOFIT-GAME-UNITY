@@ -39,7 +39,7 @@ Las detecciones `MOV_ON`, `MOV_OFF` y `UP_IMPULSE` **no son, por sí mismas, pas
 | Elemento | Referencia comprobada al 2026-11-17 | Estado |
 | --- | --- | --- |
 | Unity v0.9.4 (propuesta experimental A/B) | `feat/diagnostic-threshold-ab-v094`, commit `6feb3c0fcfb205e87d7e6c9d606a1147285a87dc`, [PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8) | **Borrador**, CI host verde, **todavía sin compilar ni validar APK**; EXP permite probar 0,15g solo opt-in |
-| Unity v0.9.3 | `fix/csv-resource-close-audit-v093`, commit `4f58562f757fc608d0951127afe995670d300878`, [PR #7](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/7) | **Borrador**, CI host verde, Android físico pendiente |
+| Unity v0.9.3 | `fix/csv-resource-close-audit-v093`, commit `4f58562f757fc608d0951127afe995670d300878`, [PR #7](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/7) | **Borrador**, CI host verde; exportación física confirmada para CSV v0.8 y nueva captura v0.9.3 (secciones 7A/7B) |
 | Unity v0.9.2 (base de v0.9.3) | `fix/automatic-download-csv-v092`, [PR #6](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/6) | Borrador, CI host verde |
 | Unity v0.9.1 | `fix/export-package-recover-v091`, [PR #5](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/5) | Borrador |
 | Unity v0.9 | `fix/defaults-025-phase-export-v09`, [PR #4](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/4) | Borrador |
@@ -132,10 +132,10 @@ Son conteos **de impulsos electrónicos**, no porcentajes de acierto sobre eleva
 
 **Problema real observado en APK v0.9:** botón `3. ARCHIVO` devolvió `java.lang.ClassNotFoundException` al invocar una `CsvExportActivity` personalizada. `COPIAR` usa portapapeles y el contenido pegado se truncó; **no constituye una exportación fiable de sesiones largas**.
 
-**Cadena de cambios (todavía no probada Android real):**
+**Cadena de cambios (estado histórico; actualización física en 7A/7B):**
 - **v0.9.1 / PR #5:** intentó corregir estructura del plugin Java y recuperar archivos privados válidos entre reinicios.
 - **v0.9.2 / PR #6:** cambió la ruta activa de exportación a `MediaStore.Downloads` desde Unity/C#, **sin selector ni COPIAR**, y conservó recuperación del último CSV privado válido.
-- **v0.9.3 / PR #7:** Astra auditó v0.9.2 y corrigió cierre explícito de streams/descriptores Java (no basta liberar JNI), comparación completa del contenido y SHA256 del destino, `IS_PENDING` durante escritura y una sola instantánea del archivo fuente. Las comprobaciones Android reales siguen pendientes.
+- **v0.9.3 / PR #7:** Astra auditó v0.9.2 y corrigió cierre explícito de streams/descriptores Java (no basta liberar JNI), comparación completa del contenido y SHA256 del destino, `IS_PENDING` durante escritura y una sola instantánea del archivo fuente. En esa auditoría las comprobaciones Android reales estaban pendientes; ver validación posterior en 7A/7B.
 
 **Comportamiento previsto en futura APK v0.9.3:** `FINALIZAR` conserva CSV privado con conteos y footer SHA256; presionar `ARCHIVO` guarda automáticamente en **Descargas** sin selector; mensaje de éxito solo tras verificar y publicar. En una instalación actualizada con la **misma firma e ID de paquete**, `ARCHIVO` puede recuperar la sesión previa **sin INICIAR**. Android 10+; no borrar datos ni desinstalar la versión anterior.
 
@@ -171,6 +171,18 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 **Nueva revisión propuesta:** [Unity PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8) añade botón `EXP: NO/SI` al panel. Normal: umbral unilateral mínimo 0,25g. EXP: permite explorar 0,20 y 0,15g; desactivar EXP restaura mínimos 0,25g. Bilateral sigue 0,12g, con control manual para ensayo 0,10g. Los cambios se registran en CSV. **No modifica firmware, NVS ni valores predeterminados.** CI: 58+9+31, 34 receptor, 16 Android simulated, 66 UI, contrato estático y Java heredado; [Actions](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/actions/runs/44100922377) **verde**. *No hay APK v0.9.4 compilada todavía.*
 
 [Informe y protocolo completo de una sola sesión A/B/A](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/feat/diagnostic-threshold-ab-v094/docs/ANALISIS_CSV_20261117_AB.md).
+
+## 7C. Auditoría de fase: límite reproducido sin cambiar producción
+
+**2026-11-17 — [PR #9, borrador](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/9)**, rama `audit/lift-phase-v094`, commit `52d61c0c2ca9aac6a3266f4f6181f04be8cfe005`, derivada de v0.9.4. [Informe comparativo y protocolo](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/audit/lift-phase-v094/docs/AUDITORIA_FASE_ELEVACION.md).
+
+- **Demostrado en host:** se compiló el `processSample` real de v2.2.7 y tres descensos sintéticos emitieron UP durante frenado, todavía con velocidad física negativa. Ejemplo: frenado0,35g, UP0,307210g a520ms, velocidad real −0,274586m/s y `shortV` +0,046149m/s. Ese UP supera también el corte unilateral normal. No demuestra que ese fuera el movimiento del usuario en cada evento.
+- `shortV` tiene fuga, saturación y resets; **no identifica velocidad/fase física**. Histéresis y rearme ya existen; aumentarlos puede perder sensibilidad. `downSeen` usa aceleración negativa, que también puede frenar una subida.
+- El UP transmite amplitud **al disparar**, no el máximo del gesto. Un evento0,172g no prueba que el pico posterior de esa subida no cruzara0,25g. El análisis de fase humana necesita vídeo y la trayectoria fina requiere RAW.
+- **Implementado:** pruebas y documentación, sin cambios en Assets, firmware, NVS/calibración, UUID o defaults0,25/0,25/0,12g y180ms. Local:236 comprobaciones C# PASS; contrato/replay firmware original y nuevo contraejemplo PASS; contrato Android estático PASS. No se compiló Unity/APK/ESP32 ni se hizo ensayo físico. El CSV privado no se releyó: las cifras experimentales provienen del informe7B.
+- **Propuesta no implementada:** detector causal en modo sombra con estados de ascenso/pausa/descenso/frenado, integración con incertidumbre y gyro auxiliar. No prometer detección temprana si todo el ascenso permanece por debajo del corte obligatorio.
+- **Captura pendiente:** firmware ofrece RAW20Hz vía STREAM,1, pero Unityv0.9.4 no lo suscribe ni lo guarda.20Hz no reproduce decisiones de dos muestras. Un clasificador fino necesita instrumentación RAW a mayor cadencia, sincronización y evaluación de carga antes de validación física.
+- **Siguiente sesión mínima de fase:**18 ciclos filmados (6derechos,6izquierdos,6bilaterales; mitad lentos/mitad normales, pausa arriba~1s), umbrales normales, marcas visibles/CSV y exportación íntegra. Sirve para asignar fase a UP, no para certificar el nuevo clasificador. Para validar también el clasificador en una sola sesión, preparar antes RAW; no pedir dos sesiones redundantes ni otra APK por este PR solo documental/de pruebas. El A/B/A de la sección8 queda como experimento alternativo de umbral, no obligatorio para esta auditoría.
 
 ## 8. Siguiente procedimiento único: A/B/A v0.9.4 (sin repetir múltiples APK)
 
@@ -212,6 +224,8 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 | 2026-11-17 | Creado el contexto maestro estable; incorporado estado Unity v0.9.3 / PR #7, firmware v2.2.7, resultados experimentales, limitaciones y protocolo de recuperación CSV. | Rama documental `docs/contexto-maestro`; referenciado PR #7 y documentos técnicos. |
 | 2026-11-17 | Primera exportación Android real v0.9.3 comprobada: CSV v0.8 íntegro (384.042 bytes; 3.066 filas; 351 EV; SHA256 válido); sesión v0.9 de 340 eventos aún no recuperada. | CSV original aportado por usuario; inspección de hash/filas sin reconstrucción. |
 | 2026-11-17 | Nueva captura v0.9.3 íntegra (215 EV, 1.970 registros): primeros UP derechos débiles rechazados, laterales fuertes ~0,7s después; tres bilaterales con primer UP derecho inferior a 0,12g. Creado modo EXP A/B/A v0.9.4 sin cambiar defaults, PR #8 y CI host verde. | CSV original del usuario; [análisis](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/feat/diagnostic-threshold-ab-v094/docs/ANALISIS_CSV_20261117_AB.md), [PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8). |
+
+| 2026-11-17 | Auditoría de fase: UP al frenar descenso reproducido en host; 236 checks C#; propuesta en sombra y límites de RAW documentados, sin cambios de producción. | [PR #9](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/9), commit `52d61c0`; validación física de fase pendiente. |
 
 ---
 
