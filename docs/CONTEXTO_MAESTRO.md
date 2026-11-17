@@ -2,7 +2,7 @@
 
 > **Punto de entrada y memoria técnica versionada del proyecto.** Leer esta página **antes** de modificar firmware, Unity, Android, pruebas o documentación.
 >
-> **Última revisión manual:** 2026-11-17 · **Estado técnico de referencia:** Unity **v0.9.3** (PR #7, **borrador**, CI host verde; **APK NO validada**), firmware instalado **v2.2.7** en ambos tobillos.
+> **Última revisión manual:** 2026-11-17 · **Estado técnico de referencia:** Unity **v0.9.4 EXP A/B** ([PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8), **borrador**, CI host verde, APK nueva pendiente); la **v0.9.3 sí fue probada físicamente en Android**, con exportación CSV válida. Firmware instalado **v2.2.7** en ambos tobillos.
 >
 > **Importante:** este archivo es una síntesis de continuidad, **no una certificación** de funcionamiento físico. Para comprobar el código real, consultar las ramas y PR actuales; las pruebas offline no equivalen a ensayos BLE/Android en un dispositivo.
 
@@ -38,6 +38,7 @@ Las detecciones `MOV_ON`, `MOV_OFF` y `UP_IMPULSE` **no son, por sí mismas, pas
 
 | Elemento | Referencia comprobada al 2026-11-17 | Estado |
 | --- | --- | --- |
+| Unity v0.9.4 (propuesta experimental A/B) | `feat/diagnostic-threshold-ab-v094`, commit `6feb3c0fcfb205e87d7e6c9d606a1147285a87dc`, [PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8) | **Borrador**, CI host verde, **todavía sin compilar ni validar APK**; EXP permite probar 0,15g solo opt-in |
 | Unity v0.9.3 | `fix/csv-resource-close-audit-v093`, commit `4f58562f757fc608d0951127afe995670d300878`, [PR #7](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/7) | **Borrador**, CI host verde, Android físico pendiente |
 | Unity v0.9.2 (base de v0.9.3) | `fix/automatic-download-csv-v092`, [PR #6](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/6) | Borrador, CI host verde |
 | Unity v0.9.1 | `fix/export-package-recover-v091`, [PR #5](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/5) | Borrador |
@@ -152,18 +153,37 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 
 **Estado actualizado:** exportación Android v0.9.3 **confirmada físicamente para un archivo íntegro**, recuperación de la sesión v0.9 **pendiente**; falla del derecho **sin resolver**. Conservar la APK y los datos privados. No repetir una sesión larga mientras se decide si el archivo original puede localizarse.
 
-## 8. Próximo procedimiento único, priorizado
+## 7B. Nueva prueba física v0.9.3 (215 EV) y explicación parcial de latencia
 
-**NO compilar ahora varias APK, NO repetir los 60 movimientos, NO tocar firmware todavía.**
+**Fecha:** 2026-11-17. Archivo recibido `BIOFIT_v09_20261117_135943_b05673f0.csv`; **240.111 bytes**; **1.970 registros**, **215 EV**, **135 APP**, cero descartados; footer SHA256 `80c7004300652188c11a6cfce26362ed347ef56fcf4ad996562c5bc0bb1026bf` validado. El archivo original no se ha subido al repositorio público.
 
-1. **Antes de cambiar rama en GitHub Desktop:** cerrar Unity; revisar cambios locales pendientes en `BIOFIT-GAME-UNITY`. Conservar archivos locales de escenas y configuración. Al seleccionar `fix/csv-resource-close-audit-v093`, si GitHub Desktop ofrece `Bring my changes` sin conflictos, traer cambios. Si hay conflictos, detenerse y examinarlos. **Stash: NO por defecto; Squash: NO; Discard: NO; Commit: NO salvo decisión explícita.**
-2. **Unity Play:** verificar `BiofitDash`, consola sin errores, controles 0,25/0,25/0,12 g, PAR=180 ms, panel y salto manual. Comprobar escenas Android.
-3. **Una única APK** desde la revisión v0.9.3, preservando package ID y firma. Si Android exige **desinstalar primero**, DETENERSE, para no perder CSV privado de la sesión anterior.
-4. **Primera acción en la nueva APK:** abrir BIOFIT DASH y pulsar `3. ARCHIVO` **sin `1. INICIAR`**; revisar mensaje real y archivo en **Descargas**. Conservar CSV original sin PDF/Google Docs. Si sale error, copiar el mensaje completo; no borrar datos.
-5. **Analizar el CSV previo recuperado**, especialmente los ~10 fallos derechos finales: alinear `EV`, `CAL/ARM`, restCount, bias/gravedad, `MOV_ON/OFF`, UP, valores de umbral y decisiones de Unity. Identificar lo demostrable.
-6. Si no se recupera o hace falta experimento adicional, **única microprueba posterior**: quietud 15 s; 10 derechas, 10 izquierdas y 5 bilaterales, espaciadas ~2 s; quietud 10 s; FINALIZAR → ARCHIVO. Anotar intentos físicos, inmediatos/tardíos/no detectados/dobles, especialmente los primeros y los últimos.
+**Resultados físicos relatados:** 20 elevaciones derechas todas con salto visual, primeras 10 con activación en pie alto/descenso y últimas 10 con respuesta rápida; 10 elevaciones izquierdas sin retraso perceptible y cinco bilaterales con retraso nuevo, aunque saltaron.
 
-**Criterio para pasar de etapa:** guardar CSV en Descargas confirmado **en el celular** y control derecho caracterizado con suficiente evidencia. El desarrollo de un nivel 2D jugable puede empezar en una rama independiente, pero todavía no declarar confiabilidad clínica o tasa física superior al 95%.
+**Evidencia del CSV:**
+- Tramo SOLO DER: **43 UP, nueve bajo 0,25g, 34 candidatos aceptados, 23 saltos Unity, 11 cubo ocupado**. Los 23 saltos no son 23 gestos físicos: algunos movimientos generan dos impulsos.
+- En las primeras 10 secuencias derechas, **7/10 primeros UP tienen amplitud inferior a 0,25g**; segundos UP de ~0,7 s después sí superan el umbral. Ejemplo `180,550s:0,172g` rechazado; `181,319s:0,373g` aceptado. Este patrón coincide con la latencia percibida sin requerir demora BLE.
+- Tramo SOLO IZQ: 23 UP, cuatro bajo umbral, 19 aceptados, 11 saltos y ocho ocupados.
+- Bilateral: cinco pares aceptados y cinco saltos; en **tres episodios** el primer UP derecho fue `0,111g`, `0,114g` o `0,100g`, inferior al corte 0,12g; pares posteriores sí disparan el salto. Ejemplo primeros candidatos `288,771s` izquierdo 0,191g y `288,804s` derecho 0,111g, seguidos por par aceptado cerca de 289,831s.
+- Entrega BLE sin rechazos, huecos, descartes ni tiempo comprimido. Cola Unity mediana derecho UP ~17,4ms, máximo 33,3ms. **No equivale a medir movimiento físico→píxel**; la latencia observada es compatible con lógica de selección de eventos, no con cola BLE de un segundo.
+
+**Distinción científica:** se demuestra el rechazo de primeros eventos débiles y aceptación de posteriores; **la asignación exacta del impulso a fase de subida/descenso sigue siendo una hipótesis** porque no hay marcador externo del movimiento físico ni RAW de IMU etiquetado. No declarar que el firmware está defectuoso por este CSV; tampoco asumir que reducir el umbral a 0,15g será seguro sin comprobar falsos positivos.
+
+**Nueva revisión propuesta:** [Unity PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8) añade botón `EXP: NO/SI` al panel. Normal: umbral unilateral mínimo 0,25g. EXP: permite explorar 0,20 y 0,15g; desactivar EXP restaura mínimos 0,25g. Bilateral sigue 0,12g, con control manual para ensayo 0,10g. Los cambios se registran en CSV. **No modifica firmware, NVS ni valores predeterminados.** CI: 58+9+31, 34 receptor, 16 Android simulated, 66 UI, contrato estático y Java heredado; [Actions](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/actions/runs/44100922377) **verde**. *No hay APK v0.9.4 compilada todavía.*
+
+[Informe y protocolo completo de una sola sesión A/B/A](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/feat/diagnostic-threshold-ab-v094/docs/ANALISIS_CSV_20261117_AB.md).
+
+## 8. Siguiente procedimiento único: A/B/A v0.9.4 (sin repetir múltiples APK)
+
+**Estado:** la sesión v0.9.3 ya aporta diagnóstico parcial; la exportación a Descargas sí funcionó en Android real. El nuevo ensayo A/B/A de v0.9.4 busca comparar adelanto de activación **contra** falsos positivos. No alterar firmware ni recalibración NVS.
+
+1. GitHub Desktop: cerrar Unity y preservar archivos locales de escenas/configuración. `Fetch origin`, checkout `feat/diagnostic-threshold-ab-v094`. Si se ofrece `Bring my changes` y no hay conflictos, trasladarlos. **Stash: NO; Squash: NO; Discard: NO; Commit: NO por defecto**, especialmente con escenas locales. No fusionar PR.
+2. Unity Play: comprobar `EXP: NO`, umbrales 0,25/0,25g y bilateral 0,12g/180ms; activar `EXP: SI` y constatar que en el pie derecho los controles permiten 0,20 y 0,15g; desactivar y verificar que regresa a 0,25g. Sin errores rojos, escenas `DiagnosticoBLE` 0 y `BiofitDash` 1.
+3. Una sola APK v0.9.4, misma identidad y firma, instalar como actualización sin borrar datos. Firmware **v2.2.7 sin flashear**.
+4. Con ambos BLE y CAL OK, activar SIN COLISION, `1.INICIAR` y QUIETO20s.
+5. `ELEVACION / SOLO DER`: **A** 10 elevaciones a 0,25g (5 lentas + 5 normales). Activar `EXP:SI`, bajar solo DER a **0,15g** (dos pulsaciones de `-`); **B** otras 10 elevaciones. Desactivar EXP (DER debe volver a 0,25g); **A'** otras 10 elevaciones. Anotar cada intento: inmediato/tardío/no detectado/doble.
+6. `SOLO IZQ` a 0,25g, 10 elevaciones; luego `BILATERAL / DASH` a UP0,12g, 10 elevaciones; bajar UP bilateral una pulsación a 0,10g, otras 10; regresar UP a 0,12g.
+7. QUIETO20s, FINALIZAR y ARCHIVO; adjuntar CSV íntegro original y anotaciones. Opcionalmente video simultáneo pie/pantalla para fase física. **60 gestos humanos en una sola captura**. No declarar un nuevo umbral óptimo solo por el conteo de saltos.
+8. En paralelo puede avanzar el primer nivel de videojuego por **otra rama**, validándolo en Play sin esperar a corregir cada detalle del tobillo derecho. Mantener la decisión de detección desacoplada del gameplay.
 
 ## 9. Hoja de ruta futura (propuesta, no entregables terminados)
 
@@ -191,6 +211,7 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 | --- | --- | --- |
 | 2026-11-17 | Creado el contexto maestro estable; incorporado estado Unity v0.9.3 / PR #7, firmware v2.2.7, resultados experimentales, limitaciones y protocolo de recuperación CSV. | Rama documental `docs/contexto-maestro`; referenciado PR #7 y documentos técnicos. |
 | 2026-11-17 | Primera exportación Android real v0.9.3 comprobada: CSV v0.8 íntegro (384.042 bytes; 3.066 filas; 351 EV; SHA256 válido); sesión v0.9 de 340 eventos aún no recuperada. | CSV original aportado por usuario; inspección de hash/filas sin reconstrucción. |
+| 2026-11-17 | Nueva captura v0.9.3 íntegra (215 EV, 1.970 registros): primeros UP derechos débiles rechazados, laterales fuertes ~0,7s después; tres bilaterales con primer UP derecho inferior a 0,12g. Creado modo EXP A/B/A v0.9.4 sin cambiar defaults, PR #8 y CI host verde. | CSV original del usuario; [análisis](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/feat/diagnostic-threshold-ab-v094/docs/ANALISIS_CSV_20261117_AB.md), [PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8). |
 
 ---
 
