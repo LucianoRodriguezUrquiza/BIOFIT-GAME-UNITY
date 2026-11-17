@@ -142,6 +142,16 @@ Son conteos **de impulsos electrónicos**, no porcentajes de acierto sobre eleva
 
 Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/fix/csv-resource-close-audit-v093/docs/AUDITORIA_V092.md), [protocolo anterior v0.9.2](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/fix/automatic-download-csv-v092/docs/REVISION_V092.md).
 
+## 7A. Validación física nueva: exportación real de v0.9.3
+
+**Fecha:** 2026-11-17. El usuario instaló una APK construida desde la rama Unity v0.9.3 y pulsó `3. ARCHIVO` sin iniciar una captura nueva. Android generó un CSV descargable, adjuntado luego al chat con nombre `BIOFIT_v08_20261116_175748_c69d4882.csv`.
+
+**Inspección de bytes del CSV exportado:** 384.042 bytes; **3.066 filas de registro** más cabecera y footer; **351 eventos `EV`**; **cero descartados**; `finalizada=1`; SHA-256 del cuerpo coincide exactamente con el footer `a8f80f81d810d82bf1fbc165b94998267af6fc3d857671db6f09cba1b6c4d270`. La exportación a Descargas en **este teléfono real** funcionó y conservó íntegramente el archivo v0.8. Esto **no** prueba todas las versiones Android ni que el contenido faltante de otra sesión pueda recuperarse.
+
+**Advertencia crítica:** este archivo pertenece a **v0.8**, no a la última prueba **v0.9 de 340 eventos** con fallo intermitente derecho. En v0.8 figura umbral unilateral `0.35 g`; resumen `IZQ UP=124`, `DER UP=57`, `PARES UP=23`. **No usar ese CSV para atribuir causas a los últimos diez fallos derechos de la sesión v0.9.** La recuperación automática eligió un archivo v0.8 válido; con los datos disponibles no es posible afirmar si la captura v0.9 existe, está truncada, inaccesible o no se guardó. Primero buscar en Descargas otros archivos `BIOFIT_v09_*.csv`; si no aparecen, una prueba física breve posterior será la vía de nuevo diagnóstico.
+
+**Estado actualizado:** exportación Android v0.9.3 **confirmada físicamente para un archivo íntegro**, recuperación de la sesión v0.9 **pendiente**; falla del derecho **sin resolver**. Conservar la APK y los datos privados. No repetir una sesión larga mientras se decide si el archivo original puede localizarse.
+
 ## 8. Próximo procedimiento único, priorizado
 
 **NO compilar ahora varias APK, NO repetir los 60 movimientos, NO tocar firmware todavía.**
@@ -180,6 +190,7 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 | Fecha | Cambio | Confirmación |
 | --- | --- | --- |
 | 2026-11-17 | Creado el contexto maestro estable; incorporado estado Unity v0.9.3 / PR #7, firmware v2.2.7, resultados experimentales, limitaciones y protocolo de recuperación CSV. | Rama documental `docs/contexto-maestro`; referenciado PR #7 y documentos técnicos. |
+| 2026-11-17 | Primera exportación Android real v0.9.3 comprobada: CSV v0.8 íntegro (384.042 bytes; 3.066 filas; 351 EV; SHA256 válido); sesión v0.9 de 340 eventos aún no recuperada. | CSV original aportado por usuario; inspección de hash/filas sin reconstrucción. |
 
 ---
 
