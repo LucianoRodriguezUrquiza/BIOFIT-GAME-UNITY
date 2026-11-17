@@ -2,7 +2,7 @@
 
 > **Punto de entrada y memoria técnica versionada del proyecto.** Leer esta página **antes** de modificar firmware, Unity, Android, pruebas o documentación.
 >
-> **Última revisión manual:** 2026-11-17 · **Estado técnico de referencia:** Unity **v0.9.4 EXP A/B** ([PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8), **borrador**, CI host verde, APK nueva pendiente); la **v0.9.3 sí fue probada físicamente en Android**, con exportación CSV válida. Firmware instalado **v2.2.7** en ambos tobillos.
+> **Última revisión manual:** 2026-11-17 · **Estado técnico de referencia:** revisión diagnóstica **v0.9.5 RAW**, [PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10), CI host verde, sin APK ni validación física; base Unity **v0.9.4 EXP A/B** ([PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8), **borrador**, CI host verde, APK nueva pendiente); la **v0.9.3 sí fue probada físicamente en Android**, con exportación CSV válida. Firmware instalado **v2.2.7** en ambos tobillos.
 >
 > **Importante:** este archivo es una síntesis de continuidad, **no una certificación** de funcionamiento físico. Para comprobar el código real, consultar las ramas y PR actuales; las pruebas offline no equivalen a ensayos BLE/Android en un dispositivo.
 
@@ -38,6 +38,7 @@ Las detecciones `MOV_ON`, `MOV_OFF` y `UP_IMPULSE` **no son, por sí mismas, pas
 
 | Elemento | Referencia comprobada al 2026-11-17 | Estado |
 | --- | --- | --- |
+| Unity v0.9.5 RAW | `feat/raw-session-v095`, commit `7fdd72b61dda8bb53eafc528be166443eb39489b`, [PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10) | Borrador; 273 checks C# y CI verde; sin compilación Unity/APK ni prueba física |
 | Unity v0.9.4 (propuesta experimental A/B) | `feat/diagnostic-threshold-ab-v094`, commit `6feb3c0fcfb205e87d7e6c9d606a1147285a87dc`, [PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8) | **Borrador**, CI host verde, **todavía sin compilar ni validar APK**; EXP permite probar 0,15g solo opt-in |
 | Unity v0.9.3 | `fix/csv-resource-close-audit-v093`, commit `4f58562f757fc608d0951127afe995670d300878`, [PR #7](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/7) | **Borrador**, CI host verde; exportación física confirmada para CSV v0.8 y nueva captura v0.9.3 (secciones 7A/7B) |
 | Unity v0.9.2 (base de v0.9.3) | `fix/automatic-download-csv-v092`, [PR #6](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/6) | Borrador, CI host verde |
@@ -184,9 +185,22 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 - **Captura pendiente:** firmware ofrece RAW20Hz vía STREAM,1, pero Unityv0.9.4 no lo suscribe ni lo guarda.20Hz no reproduce decisiones de dos muestras. Un clasificador fino necesita instrumentación RAW a mayor cadencia, sincronización y evaluación de carga antes de validación física.
 - **Siguiente sesión mínima de fase:**18 ciclos filmados (6derechos,6izquierdos,6bilaterales; mitad lentos/mitad normales, pausa arriba~1s), umbrales normales, marcas visibles/CSV y exportación íntegra. Sirve para asignar fase a UP, no para certificar el nuevo clasificador. Para validar también el clasificador en una sola sesión, preparar antes RAW; no pedir dos sesiones redundantes ni otra APK por este PR solo documental/de pruebas. El A/B/A de la sección8 queda como experimento alternativo de umbral, no obligatorio para esta auditoría.
 
-## 8. Siguiente procedimiento único: A/B/A v0.9.4 (sin repetir múltiples APK)
+## 7D. v0.9.5: instrumentación para una única sesión integral
 
-**Estado:** la sesión v0.9.3 ya aporta diagnóstico parcial; la exportación a Descargas sí funcionó en Android real. El nuevo ensayo A/B/A de v0.9.4 busca comparar adelanto de activación **contra** falsos positivos. No alterar firmware ni recalibración NVS.
+**2026-11-17.** [PR #10 en borrador](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10), rama `feat/raw-session-v095`, commit `7fdd72b61dda8bb53eafc528be166443eb39489b`, derivado de `audit/lift-phase-v094`. [Informe y protocolo completo](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/feat/raw-session-v095/docs/REVISION_V095_RAW.md). [CI verde](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/actions/runs/44109090787): regresiones C#, replay C++ de fase y Java heredado (no APK).
+
+- **Implementado:** RAW opcional de ambos sensores a 20 Hz, característica existente y comandos STREAM,1/0 con ACK `OK,STREAM,n`. Seis ejes físicos, timestamp sensor, secuencia, reloj de recepción, pérdidas, intervalos y espera de worker. Colas separadas de la cola del juego y escritura en segundo plano.
+- **Almacenamiento DASH:** principal EV/APP/CONFIG/MARCA/DIAG y compañero `_RAW.csv`, ambos con SHA256. Escritura progresiva y cierre asíncrono, parciales preservados ante fallos. El límite de 6.000 filas queda para la vista previa, no el archivo de la sesión DASH. ARCHIVO exporta/recupera ambos; conserva capturas anteriores. El modo guiado antiguo mantiene su portapapeles acotado.
+- **Corregido:** v0.9.4 intentaba registrar MODO_EXP_UMBRAL_ON/OFF, pero su whitelist los descartaba. v0.9.5 sí los conserva y registra CONFIG por pie. Agrega botón SYNC numerado con dos relojes y métricas de transporte RAW ON/OFF.
+- **Sin cambios:** detector de producción, defaults 0,25/0,25/0,12 g y 180 ms, firmware v2.2.7, NVS/calibración, UUID, escenas locales. No hay nuevo clasificador implementado.
+- **Verificación:** 273 checks C# host PASS; carga sintética de 24.002 RAW válidos sin drops del writer/cola, 12.000 APP y 120 EV conservados; fallos GATT/ACK/IO, timeout, saturación, pausa/desconexión y recuperación. Contrato Android estático y replay C++ PASS. No Unity/IL2CPP/APK, radio Android ni validación física ejecutados.
+- **Límites:** a un tracker ya desconectado no se le puede confirmar STREAM,0; apagado local y remoto best effort, comando de limpieza al conectar de nuevo. RAW 20 Hz no reproduce las decisiones internas ni garantiza capturar máximos. Se mide impacto físico BLE; los tests host no garantizan ausencia de degradación en el teléfono.
+- **Decisión:** no aumentar frecuencia ni reflashear antes de esta sesión. 40 notificaciones RAW/s entre ambos trackers, 800 B/s de valores (920 B/s a nivel ATT), más overhead y tráfico existente. Adecuado para investigar lóbulos separados ~0,7 s con vídeo; insuficiente para certificar un clasificador fino de cadencia IMU.
+- **Siguiente acción única:** preservar cambios locales, comprobar Play y compilar una APK de esta rama con firma/paquete existentes. Una captura filmada de **40 ciclos** integra A/B/A derecho, control izquierdo, bilateral y pausas arriba/descenso controlado; cuatro ciclos RAW OFF permiten comparación de transporte. FINALIZAR, esperar cierre, ARCHIVO y conservar dos CSV + vídeo. El procedimiento detallado sustituye los protocolos anteriores para evitar sesiones redundantes.
+
+## 8. Procedimiento anterior (referencia histórica; sustituido por v0.9.5): A/B/A v0.9.4 (sin repetir múltiples APK)
+
+**Actualización:** para la siguiente compilación y ensayo seguir la sección 7D y su protocolo v0.9.5; no ejecutar también estos 60 gestos. **Estado histórico:** la sesión v0.9.3 ya aporta diagnóstico parcial; la exportación a Descargas sí funcionó en Android real. El nuevo ensayo A/B/A de v0.9.4 busca comparar adelanto de activación **contra** falsos positivos. No alterar firmware ni recalibración NVS.
 
 1. GitHub Desktop: cerrar Unity y preservar archivos locales de escenas/configuración. `Fetch origin`, checkout `feat/diagnostic-threshold-ab-v094`. Si se ofrece `Bring my changes` y no hay conflictos, trasladarlos. **Stash: NO; Squash: NO; Discard: NO; Commit: NO por defecto**, especialmente con escenas locales. No fusionar PR.
 2. Unity Play: comprobar `EXP: NO`, umbrales 0,25/0,25g y bilateral 0,12g/180ms; activar `EXP: SI` y constatar que en el pie derecho los controles permiten 0,20 y 0,15g; desactivar y verificar que regresa a 0,25g. Sin errores rojos, escenas `DiagnosticoBLE` 0 y `BiofitDash` 1.
@@ -224,8 +238,9 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 | 2026-11-17 | Creado el contexto maestro estable; incorporado estado Unity v0.9.3 / PR #7, firmware v2.2.7, resultados experimentales, limitaciones y protocolo de recuperación CSV. | Rama documental `docs/contexto-maestro`; referenciado PR #7 y documentos técnicos. |
 | 2026-11-17 | Primera exportación Android real v0.9.3 comprobada: CSV v0.8 íntegro (384.042 bytes; 3.066 filas; 351 EV; SHA256 válido); sesión v0.9 de 340 eventos aún no recuperada. | CSV original aportado por usuario; inspección de hash/filas sin reconstrucción. |
 | 2026-11-17 | Nueva captura v0.9.3 íntegra (215 EV, 1.970 registros): primeros UP derechos débiles rechazados, laterales fuertes ~0,7s después; tres bilaterales con primer UP derecho inferior a 0,12g. Creado modo EXP A/B/A v0.9.4 sin cambiar defaults, PR #8 y CI host verde. | CSV original del usuario; [análisis](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/feat/diagnostic-threshold-ab-v094/docs/ANALISIS_CSV_20261117_AB.md), [PR #8](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/8). |
-
 | 2026-11-17 | Auditoría de fase: UP al frenar descenso reproducido en host; 236 checks C#; propuesta en sombra y límites de RAW documentados, sin cambios de producción. | [PR #9](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/9), commit `52d61c0`; validación física de fase pendiente. |
+
+| 2026-11-17 | v0.9.5 implementa RAW opcional, archivos completos separados, marcas EXP/SYNC y protocolo único de 40 ciclos. | [PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10), commit `7fdd72b`; 273 checks host y CI verde; APK y validación física pendientes. |
 
 ---
 
