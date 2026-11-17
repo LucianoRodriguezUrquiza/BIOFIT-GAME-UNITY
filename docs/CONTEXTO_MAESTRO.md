@@ -231,6 +231,18 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 6. Si una nueva rama/PR altera lo descrito aquí, **resolver inconsistencia explícitamente**; no duplicar cientos de líneas ni reemplazar historial comprobable por suposiciones. Conservar la separación entre evidencia, hipótesis y tareas.
 7. NO ejecutar automatizaciones por sí solas: **este documento no se sincroniza mágicamente**. Debe actualizarlo conscientemente la persona o agente que efectúe el hito.
 
+## 7D. Incidencia Android v0.9.5: sesión larga no exportada
+
+**2026-11-17 — reporte físico del usuario:** tras una prueba integral de aproximadamente **10 minutos**, la aplicación mostraba simultáneamente `Cerrando CSV y RAW...` y en la línea inferior `RAW OFF | CSV guardado SHA256 OK + RAW: ...` con contadores RAW elevados (usuario cita 31.821 / 15.924). Tras aproximadamente **cinco minutos** no vio archivos descargados en Descargas. En una nueva prueba muy corta, la exportación funcionó. **No hay CSV de la sesión larga adjunto ni prueba de su desaparición del almacenamiento privado.** Tampoco debe calificarse la v0.9.5 como exportación fiable para sesiones largas hasta validación Android real.
+
+**Diagnóstico de código verificado en PR #10 (sin modificar producción aún):**
+- El mensaje `Cerrando CSV y RAW...` puede quedar **obsoleto** en el rótulo superior (`BiofitDashGame` guarda `experimentStatus` en el instante de FINALIZAR), mientras el rótulo inferior sí consulta `monitor.CaptureFileStatus` actualizado. **No significa necesariamente cierre pendiente**.
+- `CSV guardado SHA256 OK` se asigna **después de terminar de escribir/verificar el archivo principal privado**; no confirma exportación a Descargas. `3. ARCHIVO` es proceso independiente, actualmente síncrono.
+- `BiofitAndroidExport.SaveToDownloads` valida y copia el archivo entero en memoria, después realiza verificación de contenido Android mediante `java.util.Scanner` y JNI con una cadena completa, todo en llamada síncrona; **hipótesis plausible**, no demostrada, de bloqueo en archivos grandes.
+- `BiofitBLEMonitor.ExportGameCapture` elige `SavedCapturePath` activo o, tras reinicio, `FindNewestValid`. Una captura corta posterior puede desplazar la sesión larga como candidata «más reciente», **sin borrar por sí sola sus archivos anteriores**.
+- Prioridad: **no repetir los 40 gestos**. No desinstalar, borrar datos, reflashear ni generar sesiones adicionales. Recuperar primero sesiones privadas largas, incluidas parejas RAW, usando futuro historial de archivos y selección por ID; corregir mensajes UI; hacer exportación por bloques no bloqueante con progreso/errores y SHA streaming, más una alternativa Android SAF/FileProvider para rescate. Verificar en Android real con pruebas de tamaños escalonados y fallo simulado.
+- Especificación técnica publicada en [comentario de incidencia PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10#issuecomment-6955479213). Revisión sugerida **v0.9.6 recuperación/exportación**, PR draft separado, sin modificar lógica de juego/sensores hasta validación. Ningún arreglo se ha implementado aún.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
@@ -241,6 +253,8 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 | 2026-11-17 | Auditoría de fase: UP al frenar descenso reproducido en host; 236 checks C#; propuesta en sombra y límites de RAW documentados, sin cambios de producción. | [PR #9](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/9), commit `52d61c0`; validación física de fase pendiente. |
 
 | 2026-11-17 | v0.9.5 implementa RAW opcional, archivos completos separados, marcas EXP/SYNC y protocolo único de 40 ciclos. | [PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10), commit `7fdd72b`; 273 checks host y CI verde; APK y validación física pendientes. |
+
+| 2026-11-17 | Incidencia Android v0.9.5: sesión larga con CSV privado aparentemente verificado, sin exportación observada; sesión breve posterior sí exportada. Identificada UI de cierre obsoleta y riesgo en exportación síncrona y selección solo de la captura más reciente. | [Comentario técnico PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10#issuecomment-6955479213), pendientes recuperación e instrumentación. |
 
 ---
 
