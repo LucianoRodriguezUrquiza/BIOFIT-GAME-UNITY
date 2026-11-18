@@ -277,6 +277,19 @@ El segundo archivo solo registra **18 EV del sensor derecho** (7 MOV_ON, 7 MOV_O
 
 **Implicación:** la recuperación selectiva y exportación Android de v0.9.6 funcionó para *al menos dos CSV íntegros*; **NO prueba fiabilidad de sesiones RAW largas, exportación de parejas ni el canal SAF**. Mantener la distinción entre archivos privados verificados y exportación a Descargas. No garantizar guardado de diez minutos sin ensayo real de duración y RAW equivalente. Antes de repetir 40 gestos: comprobar si existe v095 de ~10 minutos con SHA/RAW o archivos .partial; si no, ensayo de carga RAW ON con dos sensores y verificación de **dos** archivos exportados con mismo ID, idealmente primero corto y después ~10 minutos inactivos. Preservar el PDF de observaciones como evidencia cualitativa separada.
 
+## 7G. Validación Android real v0.9.6 — sesión larga RAW de ambos tobillos recuperada
+
+**2026-11-18.** El usuario realizó una grabación de reposo aproximadamente de once minutos con la APK v0.9.6 y exportó desde Android dos archivos originales emparejados (mismo ID de sesión `f3a2f9a9`), posteriormente adjuntos y auditados byte a byte:
+
+| Archivo | Tamaño | Filas de datos | SHA256 y footer |
+| --- | ---: | ---: | --- |
+| `BIOFIT_v096_20261118_125734_f3a2f9a9.csv` | 2.002.639 B | 18.151 (18.139 DIAG, 4 MARCA, 4 EV, 3 CONFIG, 1 APP) | Válidos; `finalizada=1`, `descartadas_por_limite=0` |
+| `BIOFIT_v096_20261118_125734_f3a2f9a9_RAW.csv` | 2.580.971 B | 26.517 RAW (izq 13.269, der 13.248) | Válidos; `finalizada=1`, `descartadas_por_limite=0` |
+
+La sesión principal abarca **684,463 s (11 min 24,5 s)** entre INICIO y último DIAG; el flujo RAW abarca **667,411 s (~11 min 7,4 s)**. Frecuencia media por reloj sensor: **izq 19,878 Hz; der 19,864 Hz**. En ambos sensores la secuencia avanza estrictamente de 1 al último índice, con **0 huecos de seq, 0 duplicados/desorden, 0 inválidos, 0 descartes en callbacks y 0 rechazos de disco**. RAW worker: mediana ~0,16 ms, p99 global ~1,16 ms, máximo ~10,13 ms. La recepción sí muestra jitter (máximo intervalo por pie ~163 ms) sin pérdida observada; **no demuestra latencia BLE absoluta de ~0 ms**. En la captura QUIETO hubo solo cuatro EV MOV_ON/OFF (~t Unity 457 s), **cero UP_IMPULSE**; sus causas físicas no están etiquetadas.
+
+**Conclusión de alcance:** validación física exitosa de **una** sesión prolongada con RAW 20 Hz bilateral, cierre del privado y exportación/recuperación de la pareja completa con hashes correctos. **No** valida estadísticamente tasa de fallos, todas las versiones/dispositivos, el canal alternativo SAF si no fue usado, ni un procedimiento de 40 movimientos, ni reconstrucción del detector ~224 Hz. Mantener respaldo de ambos CSV y no llamarlos datos de elevaciones (son QUIETO). La próxima prueba de movimientos puede realizarse por bloques y verificando al finalizar cada pareja CSV, preservando anotaciones SIN vídeo.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
@@ -291,6 +304,8 @@ El segundo archivo solo registra **18 EV del sensor derecho** (7 MOV_ON, 7 MOV_O
 | 2026-11-17 | Incidencia Android v0.9.5: sesión larga con CSV privado aparentemente verificado, sin exportación observada; sesión breve posterior sí exportada. Identificada UI de cierre obsoleta y riesgo en exportación síncrona y selección solo de la captura más reciente. | [Comentario técnico PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10#issuecomment-6955479213), pendientes recuperación e instrumentación. |
 
 | 2026-11-18 | v0.9.6 en PR #11 borrador: historial privado, SHA streaming, MediaStore por bloques, respaldo SAF, GUI RAW+EXP y estado grabación. Observaciones de ocho bloques sin CSV archivadas como cualitativas. | [PR #11](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/11), APK/Android reales pendientes. |
+
+| 2026-11-18 | Android v0.9.6 comprobada en reposo largo con pareja principal/RAW íntegra: 11m24s de sesión, 26.517 RAW, 0 huecos/descartes, SHA256 OK; sin validar SAF alternativo ni fase humana. | CSV originales `BIOFIT_v096_20261118_125734_f3a2f9a9*.csv` adjuntos y auditados. |
 
 ---
 
