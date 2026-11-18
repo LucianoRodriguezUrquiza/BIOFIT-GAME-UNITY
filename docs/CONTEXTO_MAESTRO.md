@@ -264,6 +264,19 @@ Estas son **observaciones humanas sin registro RAW** y no demuestran tiempo BLE,
 
 **Nivel de validación:** código y pruebas host/Android-Java SDK en CI en curso; **no** compilación Unity, APK o prueba física. Aun con CI verde, inspeccionar cambios locales en GitHub Desktop, abrir rama v096 Unity 6.3, verificar Console y botones, generar solo una APK con mismo paquete/firma e instalar como actualización sin borrar datos. **Primer objetivo Android: recuperar sesión larga del historial y exportar principal/RAW por ambos destinos**, luego una prueba corta de humo (no 40 elevaciones).
 
+## 7F. Recuperación parcial v0.9.5 — auditoría de dos CSV originales
+
+**2026-11-18.** El usuario instaló v0.9.6 y recuperó dos CSV privados que adjuntó para contrastar con su PDF de ocho bloques SYNC 001–008. Ambos archivos están **íntegros según footer SHA256, recuentos y 15 columnas**, pero **ninguno corresponde a la sesión de diez minutos de ocho bloques**.
+
+| CSV | Duración | Filas | EV | SYNC | RAW_ACTIVE |
+| --- | ---: | ---: | ---: | --- | --- |
+| `BIOFIT_v095_20261117_162940_f00d8d66.csv` | 123,558 s | 891 | 0 | 001 | False en 123 diagnósticos |
+| `BIOFIT_v095_20261118_112611_aa0b6103.csv` | 96,671 s | 730 | 18 | 001 y 002 | False en 95 diagnósticos |
+
+El segundo archivo solo registra **18 EV del sensor derecho** (7 MOV_ON, 7 MOV_OFF, 4 UP_IMPULSE) y UP de **0,103, 0,139, 0,185, 0,470 g**. Los tres primeros están por debajo de 0,25 g. No se registran APP de salto, activación EXP ni los ocho SYNC. Ninguno contiene datos RAW y **no se recibieron archivos `_RAW.csv`**. Sus marcas son insuficientes para asignar fases físicas observadas del PDF a los eventos de estos CSV.
+
+**Implicación:** la recuperación selectiva y exportación Android de v0.9.6 funcionó para *al menos dos CSV íntegros*; **NO prueba fiabilidad de sesiones RAW largas, exportación de parejas ni el canal SAF**. Mantener la distinción entre archivos privados verificados y exportación a Descargas. No garantizar guardado de diez minutos sin ensayo real de duración y RAW equivalente. Antes de repetir 40 gestos: comprobar si existe v095 de ~10 minutos con SHA/RAW o archivos .partial; si no, ensayo de carga RAW ON con dos sensores y verificación de **dos** archivos exportados con mismo ID, idealmente primero corto y después ~10 minutos inactivos. Preservar el PDF de observaciones como evidencia cualitativa separada.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
