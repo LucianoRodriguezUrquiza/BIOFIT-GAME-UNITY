@@ -346,6 +346,19 @@ Se puede comenzar un nivel original con teclado y la API de comando ya separada.
 
 **Decisión operativa:** congelar la rama `feat/final-jump-control-v097` (PR #13 draft) como **base funcional provisional del control bilateral** y comenzar desarrollo de primer nivel en **rama separada**, manteniendo firmware v2.2.7, umbrales y sistema de guardado. No reabrir protocolo A/B/A; si posteriormente se requiere cadencia física real ~1 Hz, una sola prueba breve y guiada de cinco saltos, sin confundir evidencia sintética y de usuario. Se dejó comentario de evidencia en PR #13, sin fusionar ni adjuntar CSV privados.
 
+## 7J. v0.9.8 — buffer bilateral antelación máxima 120ms, un solo slot (PR #14, 2026-11-18)
+
+El usuario desea refinamiento del control para niveles exigentes y considera futuros modos **Ship y Wave impulsados por movimientos de salto**, sin cambiar ahora a entradas de tipo HOLD. Se creó **PR #14 borrador** `feat/short-jump-buffer-v098`, base `feat/final-jump-control-v097` (PR #13, no fusionado). Código verificado en [GitHub Actions 44389101341](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/actions/runs/44389101341): jobs `regression`, `android-export-source`, `phase-firmware-replay` = SUCCESS. **Sin build Unity ni test Android físico aún.**
+
+- Nueva clase `BiofitJumpBuffer.cs` (+ .meta Unity) permite una única entrada bilateral **ya aprobada por el detector** si cubo está descendiendo y faltan ≤120ms de vuelo simulado. Expira con reloj monotónico **real** tras120ms, una nueva entrada mientras está pendiente no acumula ni renueva, se cancela ante pausa, reinicio, gameover/destrucción. Al caer, `BiofitDashGame.Update` consume una vez; registros `JUMP_COMMAND result=Buffered/AlreadyBuffered`, `JUMP_BUFFER_Executed/Expired/Cancelled`, saltos bilaterales solo cuentan después de ejecución.
+- `BiofitDashCore.EstimatedSecondsUntilLanding` usa ecuación de balística del mismo cubo (575/1560) sin alterar física, con ventana solo en descenso; comandos manuales/unilaterales preservan semántica v097 sin buffer.
+- Etiqueta de interfaz `v0.9.8`, `CONTROL_VERSION=0.9.8`, nuevos archivos `BIOFIT_v098_` con pareja `_RAW.csv`; escáner privado `BIOFIT_v0*` sigue viendo históricos v095-v097. Firmware/NVS, cortes 0,25 unilateral/0,12 bilateral, ventana180ms, cooldown900ms, RAW, guardado/exportación intactos.
+- Pruebas `JumpControl` de admisión a≤75ms, caducidad, no apilamiento, pausa y reinicio, no buffering para controles manuales, se mantiene límite900ms. `DashUiRegression` verifica callback real→buffer→`Update`→dos saltos en CSV y ninguna ejecución prematura. Todos los jobs CI pasan.
+
+**Advertencia esencial:** la prueba Android v097 de 50 elevaciones reportó 40 comandos aceptados, 35 pares descartados por cooldown900ms, 0 rechazados por aire. **El jump buffer NO recupera estos 35**, porque el filtro ocurre antes del juego; tampoco hace que movimientos cada500ms sean detectados ni reduce la latencia BLE/IMU. A 30–120FPS el cubo aterriza en ~750–800ms, antes de que el detector permita otro par a900ms, por lo que el buffer **probablemente no altere gran parte de la jugabilidad actual** salvo situaciones de frame lento o física futura. En juego con colisiones, `Step` evalúa colisión antes de consumir buffer en `Update`: revisar orden de aterrizaje/colisión antes de diseñar obstáculos frame-perfect. Es una prueba opcional de UX acotada, no solución de cadencia 2Hz.
+
+Pendiente: actualizar Unity Editor desde rama PR#14, conservar cambios locales/backups, compilar como actualización APK v098 sin desinstalar ni perder capturas, ensayo corto con 5–10 elevaciones bilaterales seguras y parejas de CSV para comprobar estabilidad. Continuar Ship/Wave por entradas discretas en rama diferente de diseño de niveles, no dentro de PR#14.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
