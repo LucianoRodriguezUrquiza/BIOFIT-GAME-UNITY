@@ -243,6 +243,27 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 - Prioridad: **no repetir los 40 gestos**. No desinstalar, borrar datos, reflashear ni generar sesiones adicionales. Recuperar primero sesiones privadas largas, incluidas parejas RAW, usando futuro historial de archivos y selección por ID; corregir mensajes UI; hacer exportación por bloques no bloqueante con progreso/errores y SHA streaming, más una alternativa Android SAF/FileProvider para rescate. Verificar en Android real con pruebas de tamaños escalonados y fallo simulado.
 - Especificación técnica publicada en [comentario de incidencia PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10#issuecomment-6955479213). Revisión sugerida **v0.9.6 recuperación/exportación**, PR draft separado, sin modificar lógica de juego/sensores hasta validación. Ningún arreglo se ha implementado aún.
 
+## 7E. v0.9.6 — recuperación de archivos y doble exportación (implementación no validada en dispositivo)
+
+**2026-11-18.** Luego de repetidos fallos de exportación de la APK v0.9.5 (incluidos bloques breves), el usuario decidió detener las pruebas físicas. Conserva APK y archivos privados; **no repetir los 40 movimientos antes de intentar recuperar la evidencia**. El documento de anotaciones presentado contiene 8 bloques SYNC 001–008; *no hay CSV comprobados* de esos bloques:
+
+- Derecha 0,25g RAW OFF: dos elevaciones sin salto. Derecha 0,25g RAW ON: elevaciones lentas mayormente sin respuesta y rápidas con respuesta principalmente en el descenso.
+- Derecha EXP 0,15g: algunos saltos durante el ascenso pero también respuesta repetida durante ascenso/descenso (5 saltos reportados en 3 elevaciones rápidas). De regreso a DER0,25g predominan respuestas en descenso.
+- Izquierda 0,25g: lentas sin salto; rápidas con respuesta en ascenso y descenso.
+- Bilateral UP0,12g: lentas sin salto, rápidas en ascenso y descenso. Bilateral UP0,10g: las lentas generan salto en ascenso y las rápidas ascenso + descenso. Control derecho final 0,25g: saltos en descenso.
+
+Estas son **observaciones humanas sin registro RAW** y no demuestran tiempo BLE, sensibilidad clínica, latencia o fase exacta de detección. No modificar detector/umbrales de producción sin datos etiquetados.
+
+**Se creó PR #11** [v0.9.6 recuperación/UI](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/11) rama `fix/export-recovery-ui-v096`, base **PR #10 rama feat/raw-session-v095** (no fusionada). [Informe](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/blob/fix/export-recovery-ui-v096/docs/REVISION_V096_RECUPERACION.md). Implementado:
+
+- File writer privado incremental SHA256, validador streaming y renombrado a CSV después de verificar; `*.partial` preservado.
+- Historial de archivos privados v095/v096 y antiguos, pares RAW, integridad y selección de sesión antigua aunque se haya grabado otra nueva.
+- **Dos destinos independientes**: MediaStore Descargas en Java worker por bloques + verificación SHA; selector Android SAF `ACTION_CREATE_DOCUMENT` para cada archivo, también SHA por bloques. No se borra el origen privado ante fallo.
+- Interfaz con RAW y EXP adyacentes, estado prominente GRABANDO/FINALIZANDO/GUARDADO/EXPORTANDO, botones SESIONES y RESCATE.
+- Sin cambios de firmware v2.2.7, NVS, calibración, UUID, detector, valores 0,25/0,25/0,12g y 180ms. Nuevas sesiones con prefijo BIOFIT_v096_; las antiguas no se migran.
+
+**Nivel de validación:** código y pruebas host/Android-Java SDK en CI en curso; **no** compilación Unity, APK o prueba física. Aun con CI verde, inspeccionar cambios locales en GitHub Desktop, abrir rama v096 Unity 6.3, verificar Console y botones, generar solo una APK con mismo paquete/firma e instalar como actualización sin borrar datos. **Primer objetivo Android: recuperar sesión larga del historial y exportar principal/RAW por ambos destinos**, luego una prueba corta de humo (no 40 elevaciones).
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
@@ -255,6 +276,8 @@ Detalles y fuentes: [Auditoría v0.9.2, cambios v0.9.3](https://github.com/Lucia
 | 2026-11-17 | v0.9.5 implementa RAW opcional, archivos completos separados, marcas EXP/SYNC y protocolo único de 40 ciclos. | [PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10), commit `7fdd72b`; 273 checks host y CI verde; APK y validación física pendientes. |
 
 | 2026-11-17 | Incidencia Android v0.9.5: sesión larga con CSV privado aparentemente verificado, sin exportación observada; sesión breve posterior sí exportada. Identificada UI de cierre obsoleta y riesgo en exportación síncrona y selección solo de la captura más reciente. | [Comentario técnico PR #10](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/10#issuecomment-6955479213), pendientes recuperación e instrumentación. |
+
+| 2026-11-18 | v0.9.6 en PR #11 borrador: historial privado, SHA streaming, MediaStore por bloques, respaldo SAF, GUI RAW+EXP y estado grabación. Observaciones de ocho bloques sin CSV archivadas como cualitativas. | [PR #11](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/11), APK/Android reales pendientes. |
 
 ---
 
