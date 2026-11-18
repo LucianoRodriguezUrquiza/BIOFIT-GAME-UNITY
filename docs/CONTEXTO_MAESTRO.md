@@ -331,6 +331,21 @@ La sesión principal abarca **684,463 s (11 min 24,5 s)** entre INICIO y último
 
 Se puede comenzar un nivel original con teclado y la API de comando ya separada. **Congelar el control como validado requiere ese ensayo corto**; no certifica confiabilidad estadística universal.
 
+## 7I. Validación física v0.9.7 — cinco bilaterales reales (2026-11-18)
+
+**Resultado del usuario:** cinco elevaciones bilaterales consecutivas desde la APK v0.9.7, cinco saltos del cubo percibidos como correctos, sin extras en reposo; latencia subjetiva ~0,10 s, **no medición de gesto→píxel**. Se recibieron dos CSV originales de una sesión con identificador `72620970`, que no deben subirse al repositorio.
+
+- CSV principal `BIOFIT_v097_20261118_191655_72620970.csv`: **2.736 filas**, 65 EV (22 MOV_ON + 22 MOV_OFF + 21 UP), SHA256 footer **válido**, `finalizada=1`, `descartadas_por_limite=0`.
+- CSV RAW `BIOFIT_v097_20261118_191655_72620970_RAW.csv`: **3.617 muestras** (izq 1.815, der 1.802), SHA256 footer válido, `finalizada=1`, **0 huecos**, duplicados, desorden, callback drop y rechazos de disco reportados; ~19,88/19,86 Hz por sensor.
+- Marcas: INICIO 134,028 s, DASH 155,277 s, SYNC001 162,361 s, SYNC002 224,600 s, QUIETO 228,326 s, FIN 231,635 s.
+- En Unity hubo **cinco decisiones `BILATERAL_DECISION=Paired`**, **cinco `JUMP_COMMAND source=BILATERAL result=Accepted`** y cinco `SALTO_BLE_REALIZADO`; **cero acciones adicionales**, rechazos del juego, pérdidas de eventos o rechazos `PairCooldown`.
+- Tiempos Unity de los cinco saltos: 203,046 / 205,151 / 206,861 / 208,660 / 210,498 s. **Intervalos reales entre comandos 2,105 / 1,710 / 1,799 / 1,838 s** (aprox. 1,8 s). Gaps entre tobillos emparejados: 16,516 / 11,101 / 15,128 / 14,128 / 3,128 ms (ventana180 ms).
+- Hubo candidatos adicionales no emparejados (en diagnóstico UP: WaitingForOther=8, Paired=5, BelowThreshold=5, OutsideWindow=3), **ningún salto extra**. No atribuir toda señal aislada a contacto con suelo sin referencia de fase.
+- Control fase actual no certifica **5 saltos cada 1,0 s**: simulación host sí, la prueba humana alcanzó ~1,8 s entre comandos. Tampoco demostrar 100 ms de latencia física ni generalizar confiabilidad estadística de una sesión.
+- `FRAME_CLAMP` registró 2 advertencias de ~50,1 ms sin fallos de acciones observados.
+
+**Decisión operativa:** congelar la rama `feat/final-jump-control-v097` (PR #13 draft) como **base funcional provisional del control bilateral** y comenzar desarrollo de primer nivel en **rama separada**, manteniendo firmware v2.2.7, umbrales y sistema de guardado. No reabrir protocolo A/B/A; si posteriormente se requiere cadencia física real ~1 Hz, una sola prueba breve y guiada de cinco saltos, sin confundir evidencia sintética y de usuario. Se dejó comentario de evidencia en PR #13, sin fusionar ni adjuntar CSV privados.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
