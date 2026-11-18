@@ -290,6 +290,19 @@ La sesión principal abarca **684,463 s (11 min 24,5 s)** entre INICIO y último
 
 **Conclusión de alcance:** validación física exitosa de **una** sesión prolongada con RAW 20 Hz bilateral, cierre del privado y exportación/recuperación de la pareja completa con hashes correctos. **No** valida estadísticamente tasa de fallos, todas las versiones/dispositivos, el canal alternativo SAF si no fue usado, ni un procedimiento de 40 movimientos, ni reconstrucción del detector ~224 Hz. Mantener respaldo de ambos CSV y no llamarlos datos de elevaciones (son QUIETO). La próxima prueba de movimientos puede realizarse por bloques y verificando al finalizar cada pareja CSV, preservando anotaciones SIN vídeo.
 
+## 7H. v0.9.6.1 — incidencia de RAW OFF y legibilidad (PR #12 borrador)
+
+**18/11/2026.** El usuario mostró screenshot Android v0.9.6 (`EXPORTADO: CSV VERIFICADO`, `RAW: OFF`, `RAW OFF local; STREAM,0 no confirmado: A task was canceled`, `n=0`) y reportó que no logra activar RAW. La imagen corresponde a una sesión anterior ya exportada. **El firmware/streaming no se puede culpar solo por esa imagen**: `ToggleRawCapture` únicamente habilita STREAM,1 si `gameCaptureActive`, `BothTrackersConnected` y links GATT existen; fuera de sesión el tap se ignoraba sin mensaje. Una sesión anterior v0.9.6 **sí** registró 26.517 RAW de ambos tobillos en ~11min; por tanto hay funcionamiento real demostrado, no invariabilidad ante todos los estados de conexión. `A task was canceled` en la captura corresponde a orden **STREAM,0 de apagado** sin confirmación, no prueba fallo de la orden de encendido.
+
+**Se creó PR #12** [v0.9.6.1 RAW/UX](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/pull/12) rama `fix/raw-ux-v0961`, base `fix/export-recovery-ui-v096` (PR #11). Cambios:
+
+- `ToggleRawCapture` indica «primero pulse INICIAR» fuera de sesión, «conectar ambos» si no hay enlaces y «esperar respuesta BLE» durante operación en curso. Botón `RAW: ESPERE` no muestra `RAW: ON` antes de que termine handshake.
+- `rawMayBeStreaming` conserva necesidad de stop si se intentó STREAM,1; se limpia únicamente tras confirmación de ambos STREAM,0; evita reenviar STREAM,0 al finalizar o pausar cuando se sabe que ya está apagado. Cualquier error de GATT se conserva como tal, sin falso éxito.
+- Panel lateral ensanchado: ancho `min(500,max(410,0.30*width))`; para captura 1536×691 pasa de ~412 a ~493 unidades virtuales y reduce ligeramente el juego. `EXP`/`RAW` contiguos más anchos. Mensajes RAW y exportación separados. Rótulos `INICIAR`, `FINALIZAR`, `ARCHIVO`, `RESCATE` sin prefijos 1./2./3./4. Pantalla marca `v0.9.6.1`.
+- Pruebas host de GUI y RAW extendidas: clic sin iniciar, ancho lateral, no enviar STREAM,0 antes de STREAM,1, no duplicar stop tras FINALIZAR.
+
+**No cambia** detector, umbrales 0,25/0,25/0,12 g, 180 ms, firmware v2.2.7, NVS, calibración, formato de CSV ni guardado que fue validado en v096. **No fue compilado/validado Android real aún**, mantener PR draft y no borrar datos locales. El usuario puede probar ahora sin recompilar v096: ambos sensores conectados -> INICIAR -> RAW OFF -> verificar RAW ON y contadores; si funciona, la confusión era el requisito de sesión. Para adoptar GUI v096.1 necesita construir APK e instalar como actualización (package/firma iguales), conservando los 9 archivos de Unity locales. Si RAW sigue OFF dentro de sesión activa, capturar la línea de estado exacta y no deducir automáticamente causa.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
