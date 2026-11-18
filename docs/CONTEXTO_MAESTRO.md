@@ -359,6 +359,19 @@ El usuario desea refinamiento del control para niveles exigentes y considera fut
 
 Pendiente: actualizar Unity Editor desde rama PR#14, conservar cambios locales/backups, compilar como actualización APK v098 sin desinstalar ni perder capturas, ensayo corto con 5–10 elevaciones bilaterales seguras y parejas de CSV para comprobar estabilidad. Continuar Ship/Wave por entradas discretas en rama diferente de diseño de niveles, no dentro de PR#14.
 
+## 7K. Prueba Android v0.9.8 (30 elevaciones) y experimento de buffer 180 ms v0.9.9 (2026-11-18)
+
+Usuario: en serie planificada de 30 elevaciones bilaterales, **A**: una respuesta percibida al descender; **B**: perfecto; **C**: tres elevaciones no dispararon salto percibido. Archivos originales sesión `BIOFIT_v098_20261118_204732_55235516.csv` y `..._RAW.csv` inspeccionados localmente y **ambos SHA256 válidos**. No se publicaron los CSV.
+
+- CSV principal 4.037 filas, 197 eventos EV; RAW 4.520 muestras (2.265 izq, 2.255 der), todos `gap_seq=0`; `descartadas_por_limite=0`. 2 `FRAME_CLAMP` anotados.
+- SYNC001 en Unity=91,944 s, SYNC002=129,690 s, SYNC003=151,381 s. No se pulsó SYNC004, pero últimos comandos de C a t164,609 s, antes del fin=195,739 s.
+- **31** `BILATERAL_DECISION=Paired`, **31** `JUMP_COMMAND source=BILATERAL result=Accepted altitude=0` y **31** acciones SALTO_BLE_REALIZADO. Distribución entre marcas: A=11, B=10, C=10. **29** `PairCooldown` (A=9, B=10, C=10), y 6 `OutsideWindow`. **CERO** `JUMP_COMMAND result=Buffered` y **cero** `JUMP_BUFFER_Executed/Expired/Cancelled`: el buffer de120ms **no se utilizó** en esta sesión. Mediana de intervalos aceptados: A1,404s, B1,269s, C0,970s.
+- Por eso aumentar buffer no puede explicar ni recuperar directamente las tres elevaciones que el usuario reportó perdidas en C; el detector bilateral con cooldown de900ms descarta antes del juego. Tampoco asumir eficacia 31/30 ni identificar positivamente los 11 comandos de A con diez gestos: hace falta etiquetado visual de fases humanas.
+
+El usuario solicitó probar **180 ms** por preferencia de respuesta. Se creó rama **`feat/jump-buffer-180ms-v099`** y PR #15 **DRAFT**, base `feat/short-jump-buffer-v098` (PR #14), sin merge ni cambios al firmware. Modificaciones estrictamente acotadas: `BiofitJumpBuffer.WindowSeconds: 0.120d→0.180d`, UI `v0.9.9`, diagnóstico `jumpBufferMs=180`, nueva captura `BIOFIT_v099_...`, y tests actualizados. Conserva un solo slot, expiración real, solo en descenso y solo tras par bilateral válido, sin acumulación. Se añadió test específico para segundo gesto a 120–160ms del aterrizaje (admisible solo en v099), ejecución única, expiración, pausa y reinicio.
+
+**CI GitHub Actions [44396378894](https://github.com/LucianoRodriguezUrquiza/BIOFIT-GAME-UNITY/actions/runs/44396378894): 3/3 jobs SUCCESS** (`regression`, `android-export-source`, `phase-firmware-replay`). **AÚN no compilada en Unity / probada en Android**. Evitar afirmación de que 180ms mejora cadencia real: cooldown de900ms y vuelo del cubo ~750–800ms implican casi siempre que input válido sucede tras aterrizar. Si aún hay pérdidas rápidas, el siguiente problema a investigar sería discriminación de fase y cooldown, no seguir ampliando el buffer. v098 y v097 siguen como bases recuperables.
+
 ## 11. Bitácora breve de actualizaciones del contexto
 
 | Fecha | Cambio | Confirmación |
