@@ -70,9 +70,20 @@ class Program {
   for(int i=0;i<12;i++) { Read(m,Packet(1,true,(ushort)i,(uint)(100000+100*i)),now-1.1+i*.1,true);Read(m,Packet(2,true,(ushort)i,(uint)(500000+100*i)),now-1.1+i*.1,true); }
   Read(m,Packet(1,false,1,99600),now);Read(m,Packet(2,false,1,499600),now);
   Check(solo==0&&pairs==0&&m.CapturedEventCount==2,"stale batch logged, no gameplay");
-  Read(m,Packet(1,false,2,101100),now);Read(m,Packet(2,false,2,501111),now);
+  // All prior STATUS observations used a simulated callback clock "now".
+  // Reflection JIT and CI host load can spend >250 ms before the first EVENT;
+  // that would fail the *real* stale-queue gate for a reason unrelated to the
+  // event algorithm. Re-anchor at the CURRENT real callback time, advancing
+  // both simulated sensor clocks by exactly the same elapsed time.
+  double freshNow=Stopwatch.GetTimestamp()/(double)Stopwatch.Frequency;
+  uint elapsedMs=(uint)Math.Max(0d,Math.Round((freshNow-now)*1000d));
+  uint freshLeft=101100u+elapsedMs, freshRight=501111u+elapsedMs;
+  Read(m,Packet(1,true,12,freshLeft),freshNow,true);
+  Read(m,Packet(2,true,12,501100u+elapsedMs),freshNow,true);
+  Read(m,Packet(1,false,2,freshLeft),freshNow);
+  Read(m,Packet(2,false,2,freshRight),freshNow);
   Check(solo==2&&pairs==1,"fresh reverse-clock pair acts");
-  Read(m,Packet(1,false,2,101100),now);
+  Read(m,Packet(1,false,2,freshLeft),freshNow);
   Check(solo==2&&pairs==1&&m.RejectedEvents==3,"duplicate cannot act");
   // A callback held >250ms inside Unity cannot act even with a recent sensor time.
   Read(m,Packet(1,false,3,100100),now-1);

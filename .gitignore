@@ -80,3 +80,8 @@ crashlytics-build.properties
 /tests/**/obj/
 
 __pycache__/
+
+# Exact byte-for-byte working asset copy from pinned upstream submodule.
+# Source remains in ThirdParty/GeomeTryOriginal; Unity should see Assets ONLY.
+/Assets/GeomeTryOriginal/Assets/
+/Assets/GeomeTryOriginal/Assets.meta

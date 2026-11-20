@@ -1,0 +1,3 @@
+[submodule "ThirdParty/GeomeTryOriginal"]
+	path = ThirdParty/GeomeTryOriginal
+	url = https://github.com/Christ0u/GeomeTry.git

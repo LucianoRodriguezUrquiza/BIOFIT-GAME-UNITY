@@ -7,9 +7,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          submodules: recursive
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+      - run: python3 tests/check_geometry_original.py
+      - run: python3 tests/check_geometry_navigation.py
       - run: dotnet run --project tests/LatencyRegression
       - run: dotnet run --project tests/ReceiverRegression
       - run: dotnet run --project tests/AndroidDownloadsRegression
@@ -21,6 +24,50 @@ jobs:
       - run: dotnet run --project tests/RawRegression
       - run: dotnet run --project tests/ArchiveRecovery096
       - run: python3 tests/check_android_export.py
+  geometry-windows-compat:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Prepare original assets and overlays with Windows PowerShell
+        shell: powershell
+        run: |
+          .\tools\prepare_geometry_original.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Compatibility preparation failed" }
+      - name: Re-run compatibility patch (must be idempotent)
+        shell: powershell
+        run: |
+          .\tools\apply_geometry_compat.ps1
+          if ($LASTEXITCODE -ne 0) { throw "Compatibility patch rerun failed" }
+      - name: Check real Windows workspace after compatibility patches
+        shell: powershell
+        run: |
+          $root = 'Assets/GeomeTryOriginal/Assets'
+          if (!(Test-Path "$root/Scenes/Level.unity")) { throw 'Original scene absent' }
+          if (Test-Path 'Assets/GeomeTryOriginal/ProjectSettings') { throw 'Nested ProjectSettings imported' }
+          if (Test-Path "$root/Scripts/Camera.cs") { throw 'Old conflicting Camera script still present' }
+          if (!(Test-Path "$root/Scripts/GeometryCamera.cs.meta")) { throw 'Camera GUID lost' }
+          $orb = Get-Content -Raw "$root/Scripts/JumpOrb.cs"
+          if (!$orb.Contains('BiofitGeomeTryLegacyBridge.TryConsumeOrbPulse()')) { throw 'BLE orb input absent' }
+          if (!$orb.Contains('12.5f') -or !$orb.Contains('20.0f') -or !$orb.Contains('27.0f')) { throw 'Orb forces altered' }
+          $selection = Get-Content -Raw "$root/Scripts/LevelSelectionManager.cs"
+          if (!$selection.Contains('Resources.LoadAll<TextAsset>("maps/BASE")')) { throw 'Level selection path wrong' }
+          foreach ($f in @(
+            "$root/Resources/Sprites/Character/Ship/Ship.png",
+            "$root/Resources/Sprites/Character/Wave/Wave001.png",
+            "$root/Resources/Sprites/Obstacles/Tile/smallTile.png"
+          )) {
+            $b = [System.IO.File]::ReadAllBytes((Resolve-Path $f))
+            if ($b.Length -lt 8 -or $b[0] -ne 137 -or $b[1] -ne 80 -or $b[2] -ne 78 -or $b[3] -ne 71) {
+              throw "Not a valid PNG signature: $f"
+            }
+          }
+          $original = git -C ThirdParty/GeomeTryOriginal rev-parse HEAD
+          if ($original.Trim() -ne 'd922caddb4d21ecb791a266143e279bdb969d42c') { throw 'Upstream changed' }
+          Write-Host 'PASS Windows compatibility: original scenes, PNG, Camera, levels, input-orbs'
+
   android-export-source:
     runs-on: ubuntu-latest
     steps:

@@ -27,7 +27,7 @@ public static class BiofitPrepararDash
         if (cameraObject == null)
         {
             cameraObject = new GameObject("Main Camera");
-            Camera camera = cameraObject.AddComponent<Camera>();
+            UnityEngine.Camera camera = cameraObject.AddComponent<UnityEngine.Camera>();
             camera.orthographic = true;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.055f, 0.10f, 0.18f);

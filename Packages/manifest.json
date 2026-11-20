@@ -44,6 +44,7 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0",
-    "com.github.yoshidan.unible": "https://github.com/yoshidan/UniBLE.git?path=Assets/UniBLE#v0.1.1"
+    "com.github.yoshidan.unible": "https://github.com/yoshidan/UniBLE.git?path=Assets/UniBLE#v0.1.1",
+    "com.unity.render-pipelines.universal": "17.3.0"
   }
 }
